@@ -9,3 +9,4 @@ dist/
 
 rightcode_proxy_config.json
 rightcode_proxy_events.jsonl
+rightcode_proxy_requests.jsonl

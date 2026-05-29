@@ -1,61 +1,43 @@
 # codex-api-tool
 
-A lightweight local proxy + GUI for Codex-compatible API routing.
+A lightweight local proxy + GUI for Codex-compatible Responses API routing.
 
-This tool lets you:
+## What it does
 
-- run a local HTTP proxy for Responses API traffic
-- choose one mode from `low / medium / high / xhigh`
-- rewrite model suffix automatically:
-  - `-low`
-  - `-medium`
-  - `-high`
-  - `-xhigh`
-- optionally keep `reasoning.effort` aligned with the selected mode
-- view runtime status and recent rewrite events in GUI
+- Runs a local proxy server.
+- Lets you create multiple model rewrite rules in GUI.
+- Each rule is exact-match:
+  - If `incoming model == source model`, rewrite to `target model`.
+  - If no rule matches, request is forwarded unchanged.
+- Splits logs into two pages:
+  - `Event Log`: startup/shutdown/config/rule/error + request summary
+  - `Request Log`: per-request timestamp, source model, final model, matched rule, status
 
-## Why this tool
+## Example
 
-Some providers display or bill by `model` slug, while many Codex clients send:
+Rule:
 
-- `model = gpt-5.3-codex`
-- `reasoning.effort = xhigh`
+- Source: `gpt-5.3-codex`
+- Target: `gpt-5.3-codex-xhigh`
 
-This tool can rewrite to:
+Result:
 
-- `model = gpt-5.3-codex-xhigh`
+- Incoming `gpt-5.3-codex` -> rewritten to `gpt-5.3-codex-xhigh`
+- Incoming `gpt-5.5` -> unchanged
 
-so provider-side records are easier to align with your selected mode.
-
-## Requirements
-
-- Windows (tested)
-- Python 3.10+ (Tkinter included in standard Python)
-
-No third-party runtime dependency is required.
-
-## Quick Start
+## Run
 
 ```powershell
 python rightcode_proxy_gui.py
 ```
 
-Then in GUI:
+Then set your Codex/ccswitch provider `base_url` to:
 
-1. Select mode (`low/medium/high/xhigh`)
-2. Click `Start`
-3. Point your Codex/ccswitch provider `base_url` to:
-   `http://127.0.0.1:8787/codex/v1`
+```text
+http://127.0.0.1:8787/codex/v1
+```
 
-## Key Fields
-
-- `Listen Host` / `Listen Port`: local proxy address
-- `Upstream Base URL`: upstream provider URL (default `https://right.codes/codex/v1`)
-- `Base Model`: e.g. `gpt-5.3-codex`
-- `Mode`: one of `low/medium/high/xhigh`
-- `Rewrite reasoning.effort`: keep effort synced with mode
-
-## Build EXE (single file)
+## Build EXE
 
 ```powershell
 python -m pip install pyinstaller
@@ -66,17 +48,16 @@ Output:
 
 - `dist/rightcode-proxy-gui.exe`
 
-## Files generated at runtime
+## Generated files
 
 - `rightcode_proxy_config.json`
 - `rightcode_proxy_events.jsonl`
+- `rightcode_proxy_requests.jsonl`
 
-Both are created in the same directory as the script/exe.
+## Notes
 
-## Safety notes
-
-- This tool forwards request headers (including Authorization) to your configured upstream.
-- Review upstream URL before running in production environments.
+- Authorization headers are forwarded to your configured upstream.
+- Rules are order-sensitive; first exact match wins.
 
 ## License
 
