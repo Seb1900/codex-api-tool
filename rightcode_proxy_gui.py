@@ -17,7 +17,7 @@ from typing import Any
 from urllib.parse import urlsplit
 
 
-APP_TITLE = "Codex API Rule Proxy"
+APP_TITLE = "Codex API 规则代理"
 APP_DIR = Path(__file__).resolve().parent
 CONFIG_PATH = APP_DIR / "rightcode_proxy_config.json"
 EVENT_LOG_PATH = APP_DIR / "rightcode_proxy_events.jsonl"
@@ -430,9 +430,9 @@ class ProxyApp(tk.Tk):
         self.rule_source_var = tk.StringVar(value="")
         self.rule_target_var = tk.StringVar(value="")
 
-        self.status_var = tk.StringVar(value="Status: stopped")
-        self.counter_var = tk.StringVar(value="Requests 0 / Rewritten 0")
-        self.last_var = tk.StringVar(value="Last request: none")
+        self.status_var = tk.StringVar(value="状态：已停止")
+        self.counter_var = tk.StringVar(value="请求 0 / 已重写 0")
+        self.last_var = tk.StringVar(value="最近请求：无")
 
         self._build_ui()
         self._load_rules_to_table(cfg.rules)
@@ -443,48 +443,48 @@ class ProxyApp(tk.Tk):
         root = ttk.Frame(self)
         root.pack(fill="both", expand=True, padx=10, pady=10)
 
-        cfg_box = ttk.LabelFrame(root, text="Proxy Config")
+        cfg_box = ttk.LabelFrame(root, text="代理配置")
         cfg_box.pack(fill="x", pady=6)
 
-        ttk.Label(cfg_box, text="Listen Host").grid(row=0, column=0, padx=8, pady=6, sticky="w")
+        ttk.Label(cfg_box, text="监听地址").grid(row=0, column=0, padx=8, pady=6, sticky="w")
         ttk.Entry(cfg_box, textvariable=self.listen_host_var, width=16).grid(row=0, column=1, padx=8, pady=6, sticky="w")
 
-        ttk.Label(cfg_box, text="Listen Port").grid(row=0, column=2, padx=8, pady=6, sticky="w")
+        ttk.Label(cfg_box, text="监听端口").grid(row=0, column=2, padx=8, pady=6, sticky="w")
         ttk.Entry(cfg_box, textvariable=self.listen_port_var, width=10).grid(row=0, column=3, padx=8, pady=6, sticky="w")
 
-        ttk.Label(cfg_box, text="Upstream Base URL").grid(row=1, column=0, padx=8, pady=6, sticky="w")
+        ttk.Label(cfg_box, text="上游地址").grid(row=1, column=0, padx=8, pady=6, sticky="w")
         ttk.Entry(cfg_box, textvariable=self.upstream_var, width=72).grid(row=1, column=1, columnspan=3, padx=8, pady=6, sticky="we")
 
         btn_row = ttk.Frame(root)
         btn_row.pack(fill="x", pady=6)
-        ttk.Button(btn_row, text="Start", command=self.start_proxy).pack(side="left", padx=4)
-        ttk.Button(btn_row, text="Stop", command=self.stop_proxy).pack(side="left", padx=4)
-        ttk.Button(btn_row, text="Refresh Status", command=self.refresh_status).pack(side="left", padx=4)
-        ttk.Button(btn_row, text="Open Log Folder", command=self.open_log_dir).pack(side="left", padx=4)
+        ttk.Button(btn_row, text="启动", command=self.start_proxy).pack(side="left", padx=4)
+        ttk.Button(btn_row, text="停止", command=self.stop_proxy).pack(side="left", padx=4)
+        ttk.Button(btn_row, text="刷新状态", command=self.refresh_status).pack(side="left", padx=4)
+        ttk.Button(btn_row, text="打开日志文件夹", command=self.open_log_dir).pack(side="left", padx=4)
 
-        status_box = ttk.LabelFrame(root, text="Runtime Status")
+        status_box = ttk.LabelFrame(root, text="运行状态")
         status_box.pack(fill="x", pady=6)
         ttk.Label(status_box, textvariable=self.status_var).pack(anchor="w", padx=8, pady=3)
         ttk.Label(status_box, textvariable=self.counter_var).pack(anchor="w", padx=8, pady=3)
         ttk.Label(status_box, textvariable=self.last_var).pack(anchor="w", padx=8, pady=3)
 
-        rules_box = ttk.LabelFrame(root, text="Rewrite Rules (Exact Match)")
+        rules_box = ttk.LabelFrame(root, text="模型改写规则（精确匹配）")
         rules_box.pack(fill="both", expand=False, pady=6)
 
         input_row = ttk.Frame(rules_box)
         input_row.pack(fill="x", padx=8, pady=6)
-        ttk.Label(input_row, text="Source Model").pack(side="left", padx=4)
+        ttk.Label(input_row, text="基础模型").pack(side="left", padx=4)
         ttk.Entry(input_row, textvariable=self.rule_source_var, width=34).pack(side="left", padx=4)
-        ttk.Label(input_row, text="Target Model").pack(side="left", padx=4)
+        ttk.Label(input_row, text="替换后模型").pack(side="left", padx=4)
         ttk.Entry(input_row, textvariable=self.rule_target_var, width=34).pack(side="left", padx=4)
 
         rule_btn_row = ttk.Frame(rules_box)
         rule_btn_row.pack(fill="x", padx=8, pady=4)
-        ttk.Button(rule_btn_row, text="Add Rule", command=self.add_rule).pack(side="left", padx=4)
-        ttk.Button(rule_btn_row, text="Update Selected", command=self.update_rule).pack(side="left", padx=4)
-        ttk.Button(rule_btn_row, text="Delete Selected", command=self.delete_rule).pack(side="left", padx=4)
-        ttk.Button(rule_btn_row, text="Clear Inputs", command=self.clear_rule_inputs).pack(side="left", padx=4)
-        ttk.Button(rule_btn_row, text="Save Rules", command=self.save_rules_only).pack(side="left", padx=4)
+        ttk.Button(rule_btn_row, text="新增规则", command=self.add_rule).pack(side="left", padx=4)
+        ttk.Button(rule_btn_row, text="更新选中", command=self.update_rule).pack(side="left", padx=4)
+        ttk.Button(rule_btn_row, text="删除选中", command=self.delete_rule).pack(side="left", padx=4)
+        ttk.Button(rule_btn_row, text="清空输入", command=self.clear_rule_inputs).pack(side="left", padx=4)
+        ttk.Button(rule_btn_row, text="保存规则", command=self.save_rules_only).pack(side="left", padx=4)
 
         table_wrap = ttk.Frame(rules_box)
         table_wrap.pack(fill="both", expand=True, padx=8, pady=6)
@@ -495,8 +495,8 @@ class ProxyApp(tk.Tk):
             show="headings",
             height=8,
         )
-        self.rules_table.heading("source_model", text="Source Model")
-        self.rules_table.heading("target_model", text="Target Model")
+        self.rules_table.heading("source_model", text="基础模型")
+        self.rules_table.heading("target_model", text="替换后模型")
         self.rules_table.column("source_model", width=360, anchor="w")
         self.rules_table.column("target_model", width=360, anchor="w")
         self.rules_table.pack(side="left", fill="both", expand=True)
@@ -506,7 +506,7 @@ class ProxyApp(tk.Tk):
         self.rules_table.configure(yscrollcommand=scroll.set)
         scroll.pack(side="right", fill="y")
 
-        logs_box = ttk.LabelFrame(root, text="Logs")
+        logs_box = ttk.LabelFrame(root, text="日志")
         logs_box.pack(fill="both", expand=True, pady=6)
 
         notebook = ttk.Notebook(logs_box)
@@ -514,8 +514,8 @@ class ProxyApp(tk.Tk):
 
         event_tab = ttk.Frame(notebook)
         request_tab = ttk.Frame(notebook)
-        notebook.add(event_tab, text="Event Log")
-        notebook.add(request_tab, text="Request Log")
+        notebook.add(event_tab, text="事件日志")
+        notebook.add(request_tab, text="请求日志")
 
         self.event_text = tk.Text(event_tab, wrap="word", state="disabled", height=12)
         self.event_text.pack(fill="both", expand=True)
@@ -543,13 +543,13 @@ class ProxyApp(tk.Tk):
         port_text = self.listen_port_var.get().strip()
 
         if not port_text:
-            raise ValueError("Listen port is required.")
+            raise ValueError("监听端口不能为空。")
         try:
             listen_port = int(port_text)
         except ValueError as exc:
-            raise ValueError("Listen port must be an integer.") from exc
+            raise ValueError("监听端口必须是整数。") from exc
         if not (1 <= listen_port <= 65535):
-            raise ValueError("Listen port must be between 1 and 65535.")
+            raise ValueError("监听端口必须在 1 到 65535 之间。")
 
         rules = self._collect_rules_from_table()
         return ProxyConfig(
@@ -576,7 +576,7 @@ class ProxyApp(tk.Tk):
         source_model = self.rule_source_var.get().strip()
         target_model = self.rule_target_var.get().strip()
         if not source_model or not target_model:
-            messagebox.showerror(APP_TITLE, "Source model and target model are both required.")
+            messagebox.showerror(APP_TITLE, "基础模型和替换后模型都不能为空。")
             return
 
         # Deterministic behavior: one source model maps to one target model.
@@ -608,12 +608,12 @@ class ProxyApp(tk.Tk):
     def update_rule(self) -> None:
         selected = self.rules_table.selection()
         if not selected:
-            messagebox.showerror(APP_TITLE, "Select one rule to update.")
+            messagebox.showerror(APP_TITLE, "请选择一条规则进行更新。")
             return
         source_model = self.rule_source_var.get().strip()
         target_model = self.rule_target_var.get().strip()
         if not source_model or not target_model:
-            messagebox.showerror(APP_TITLE, "Source model and target model are both required.")
+            messagebox.showerror(APP_TITLE, "基础模型和替换后模型都不能为空。")
             return
         iid = selected[0]
         self.rules_table.item(iid, values=(source_model, target_model))
@@ -629,7 +629,7 @@ class ProxyApp(tk.Tk):
     def delete_rule(self) -> None:
         selected = self.rules_table.selection()
         if not selected:
-            messagebox.showerror(APP_TITLE, "Select one rule to delete.")
+            messagebox.showerror(APP_TITLE, "请选择一条规则进行删除。")
             return
         iid = selected[0]
         source_model, target_model = self.rules_table.item(iid, "values")
@@ -650,12 +650,12 @@ class ProxyApp(tk.Tk):
             messagebox.showerror(APP_TITLE, str(exc))
             return
         self.state_obj.update_config(cfg)
-        messagebox.showinfo(APP_TITLE, "Rules saved.")
+        messagebox.showinfo(APP_TITLE, "规则已保存。")
         self.refresh_status()
 
     def start_proxy(self) -> None:
         if self.state_obj.running:
-            messagebox.showinfo(APP_TITLE, "Proxy is already running.")
+            messagebox.showinfo(APP_TITLE, "代理已在运行中。")
             return
         try:
             cfg = self._build_config_from_form()
@@ -672,7 +672,7 @@ class ProxyApp(tk.Tk):
         except Exception as exc:
             self.state_obj.set_error(str(exc))
             self.refresh_status()
-            messagebox.showerror(APP_TITLE, f"Start failed: {exc}")
+            messagebox.showerror(APP_TITLE, f"启动失败：{exc}")
             return
 
         def run_server() -> None:
@@ -718,28 +718,28 @@ class ProxyApp(tk.Tk):
 
         if snap["running"]:
             status_line = (
-                f"Status: running at http://{cfg['listen_host']}:{cfg['listen_port']} "
+                f"状态：运行中 http://{cfg['listen_host']}:{cfg['listen_port']} "
                 f"-> {cfg['upstream_base_url']}"
             )
         else:
-            status_line = "Status: stopped"
+            status_line = "状态：已停止"
         if snap["last_error"]:
-            status_line += f" | Error: {snap['last_error']}"
+            status_line += f" | 错误：{snap['last_error']}"
         self.status_var.set(status_line)
 
         self.counter_var.set(
-            f"Requests {snap['total_requests']} / Rewritten {snap['total_rewrites']} / Rules {len(cfg['rules'])}"
+            f"请求 {snap['total_requests']} / 已重写 {snap['total_rewrites']} / 规则 {len(cfg['rules'])}"
         )
 
         last_request = snap.get("last_request")
         if last_request:
             self.last_var.set(
-                "Last request: "
+                "最近请求："
                 f"{last_request.get('original_model')} -> {last_request.get('final_model')} "
-                f"(rewritten={last_request.get('rewritten')}, status={last_request.get('status')})"
+                f"(已重写={last_request.get('rewritten')}, 状态={last_request.get('status')})"
             )
         else:
-            self.last_var.set("Last request: none")
+            self.last_var.set("最近请求：无")
 
     def poll_ui_queue(self) -> None:
         changed = False
@@ -766,35 +766,40 @@ class ProxyApp(tk.Tk):
         ts = event.get("ts")
         if kind == "request":
             return (
-                f"[{ts}] request status={event.get('status')} "
+                f"[{ts}] 请求 状态={event.get('status')} "
                 f"{event.get('original_model')} -> {event.get('final_model')} "
-                f"rewritten={event.get('rewritten')} id={event.get('request_id')}"
+                f"已重写={event.get('rewritten')} ID={event.get('request_id')}"
             )
         if kind in {"rule_added", "rule_updated", "rule_deleted"}:
+            kind_map = {
+                "rule_added": "规则新增",
+                "rule_updated": "规则更新",
+                "rule_deleted": "规则删除",
+            }
             return (
-                f"[{ts}] {kind} "
+                f"[{ts}] {kind_map.get(kind, kind)} "
                 f"{event.get('source_model')} -> {event.get('target_model')}"
             )
         if kind == "startup":
-            return f"[{ts}] startup listen={event.get('listen')} upstream={event.get('upstream')}"
+            return f"[{ts}] 启动 监听={event.get('listen')} 上游={event.get('upstream')}"
         if kind == "shutdown":
-            return f"[{ts}] shutdown"
+            return f"[{ts}] 停止"
         if kind == "error":
-            return f"[{ts}] error {event.get('message')}"
+            return f"[{ts}] 错误 {event.get('message')}"
         if kind == "config_saved":
             return (
-                f"[{ts}] config_saved listen={event.get('listen')} "
-                f"upstream={event.get('upstream')} rules={event.get('rule_count')}"
+                f"[{ts}] 配置已保存 监听={event.get('listen')} "
+                f"上游={event.get('upstream')} 规则数={event.get('rule_count')}"
             )
         return f"[{ts}] {json.dumps(event, ensure_ascii=False)}"
 
     def format_request_line(self, req: dict[str, Any]) -> str:
         return (
-            f"[{req.get('ts')}] status={req.get('status')} method={req.get('method')} "
-            f"model={req.get('original_model')} -> {req.get('final_model')} "
-            f"rewritten={req.get('rewritten')} "
-            f"matched={req.get('matched_source_model')}->{req.get('matched_target_model')} "
-            f"id={req.get('request_id')}"
+            f"[{req.get('ts')}] 状态={req.get('status')} 方法={req.get('method')} "
+            f"模型={req.get('original_model')} -> {req.get('final_model')} "
+            f"已重写={req.get('rewritten')} "
+            f"命中={req.get('matched_source_model')}->{req.get('matched_target_model')} "
+            f"ID={req.get('request_id')}"
         )
 
     def append_event_line(self, line: str) -> None:
@@ -815,7 +820,7 @@ class ProxyApp(tk.Tk):
             ensure_parent(REQUEST_LOG_PATH)
             os.startfile(str(APP_DIR))  # type: ignore[attr-defined]
         except Exception as exc:
-            messagebox.showerror(APP_TITLE, f"Open log folder failed: {exc}")
+            messagebox.showerror(APP_TITLE, f"打开日志文件夹失败：{exc}")
 
     def on_close(self) -> None:
         try:
