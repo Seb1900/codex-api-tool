@@ -889,17 +889,20 @@ class ProxyApp(tk.Tk):
     def format_request_line(self, req: dict[str, Any]) -> str:
         original_model = req.get("original_model") or "未解析"
         final_model = req.get("final_model") or original_model
-        matched_source = req.get("matched_source_model") or "未命中"
-        matched_target = req.get("matched_target_model") or "未命中"
+        rewritten = bool(req.get("rewritten"))
+        request_id = req.get("request_id")
         parse_error = req.get("parse_error")
-        parse_error_text = f" 解析错误={parse_error}" if parse_error else ""
-        return (
-            f"[{req.get('ts')}] 状态={req.get('status')} 方法={req.get('method')} "
-            f"模型={original_model} -> {final_model} "
-            f"已重写={req.get('rewritten')} "
-            f"命中={matched_source}->{matched_target} "
-            f"ID={req.get('request_id')}{parse_error_text}"
-        )
+
+        if rewritten:
+            line = f"[{req.get('ts')}] 模型={original_model} 重写为-> {final_model}"
+            if request_id:
+                line += f" ID={request_id}"
+        else:
+            line = f"[{req.get('ts')}] 模型={original_model} 未重写-> {final_model}"
+
+        if parse_error:
+            line += f" 解析错误={parse_error}"
+        return line
 
     def append_event_line(self, line: str) -> None:
         self.event_text.configure(state="normal")
