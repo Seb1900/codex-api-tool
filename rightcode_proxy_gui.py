@@ -7,6 +7,7 @@ import json
 import os
 import queue
 import ssl
+import sys
 import threading
 import tkinter as tk
 from dataclasses import asdict, dataclass, field
@@ -18,7 +19,14 @@ from urllib.parse import urlsplit
 
 
 APP_TITLE = "Codex API 规则代理"
-APP_DIR = Path(__file__).resolve().parent
+APP_VERSION = "0.2.1"
+
+# In onefile EXE mode, __file__ points to a temp extraction dir.
+# Use sys.executable so logs/config stay beside the EXE.
+if getattr(sys, "frozen", False):
+    APP_DIR = Path(sys.executable).resolve().parent
+else:
+    APP_DIR = Path(__file__).resolve().parent
 CONFIG_PATH = APP_DIR / "rightcode_proxy_config.json"
 EVENT_LOG_PATH = APP_DIR / "rightcode_proxy_events.jsonl"
 REQUEST_LOG_PATH = APP_DIR / "rightcode_proxy_requests.jsonl"
@@ -232,7 +240,7 @@ class AppState:
 
 class ProxyHandler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
-    server_version = "CodexRuleProxy/2.0"
+    server_version = f"CodexRuleProxy/{APP_VERSION}"
 
     def log_message(self, fmt: str, *args: Any) -> None:  # noqa: A003
         return
@@ -247,6 +255,10 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 {
                     "ok": True,
                     "time": now_iso(),
+                    "app_version": APP_VERSION,
+                    "app_dir": str(APP_DIR),
+                    "event_log_path": str(EVENT_LOG_PATH),
+                    "request_log_path": str(REQUEST_LOG_PATH),
                     "running": snap["running"],
                     "total_requests": snap["total_requests"],
                     "total_rewrites": snap["total_rewrites"],
@@ -467,6 +479,7 @@ class ProxyApp(tk.Tk):
         self.status_var = tk.StringVar(value="状态：已停止")
         self.counter_var = tk.StringVar(value="请求 0 / 已重写 0")
         self.last_var = tk.StringVar(value="最近请求：无")
+        self.path_var = tk.StringVar(value=f"日志目录：{APP_DIR}")
 
         self._build_ui()
         self._load_rules_to_table(cfg.rules)
@@ -502,6 +515,7 @@ class ProxyApp(tk.Tk):
         ttk.Label(status_box, textvariable=self.status_var).pack(anchor="w", padx=8, pady=3)
         ttk.Label(status_box, textvariable=self.counter_var).pack(anchor="w", padx=8, pady=3)
         ttk.Label(status_box, textvariable=self.last_var).pack(anchor="w", padx=8, pady=3)
+        ttk.Label(status_box, textvariable=self.path_var).pack(anchor="w", padx=8, pady=3)
 
         rules_box = ttk.LabelFrame(root, text="模型改写规则（精确匹配）")
         rules_box.pack(fill="both", expand=False, pady=6)
@@ -806,6 +820,7 @@ class ProxyApp(tk.Tk):
         self.counter_var.set(
             f"请求 {snap['total_requests']} / 已重写 {snap['total_rewrites']} / 规则 {len(cfg['rules'])}"
         )
+        self.path_var.set(f"日志目录：{APP_DIR}")
 
         last_request = snap.get("last_request")
         if last_request:
