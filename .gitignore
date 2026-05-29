@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+build/
+dist/
+*.spec
+
+rightcode_proxy_config.json
+rightcode_proxy_events.jsonl
