@@ -261,6 +261,23 @@ class ProxyHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
             return
+        self._app_state().record_request(
+            {
+                "kind": "request",
+                "method": "GET",
+                "path": self.path,
+                "upstream": None,
+                "status": 404,
+                "reason": "not found",
+                "request_id": None,
+                "original_model": None,
+                "final_model": None,
+                "rewritten": False,
+                "matched_source_model": None,
+                "matched_target_model": None,
+                "parse_error": None,
+            }
+        )
         self.send_error(404, "not found")
 
     def do_POST(self) -> None:  # noqa: N802
@@ -321,6 +338,23 @@ class ProxyHandler(BaseHTTPRequestHandler):
         if upstream.scheme not in {"http", "https"} or not upstream.netloc:
             msg = f"invalid upstream_base_url: {cfg.upstream_base_url}"
             state.set_error(msg)
+            state.record_request(
+                {
+                    "kind": "request",
+                    "method": method,
+                    "path": self.path,
+                    "upstream": cfg.upstream_base_url,
+                    "status": 500,
+                    "reason": msg,
+                    "request_id": None,
+                    "original_model": original_model,
+                    "final_model": final_model,
+                    "rewritten": rewritten,
+                    "matched_source_model": matched_source,
+                    "matched_target_model": matched_target,
+                    "parse_error": parse_error,
+                }
+            )
             self._write_text(500, msg)
             return
 
@@ -436,6 +470,7 @@ class ProxyApp(tk.Tk):
 
         self._build_ui()
         self._load_rules_to_table(cfg.rules)
+        self.load_log_history()
         self.after(250, self.refresh_status)
         self.after(400, self.poll_ui_queue)
 
@@ -459,7 +494,7 @@ class ProxyApp(tk.Tk):
         btn_row.pack(fill="x", pady=6)
         ttk.Button(btn_row, text="启动", command=self.start_proxy).pack(side="left", padx=4)
         ttk.Button(btn_row, text="停止", command=self.stop_proxy).pack(side="left", padx=4)
-        ttk.Button(btn_row, text="刷新状态", command=self.refresh_status).pack(side="left", padx=4)
+        ttk.Button(btn_row, text="刷新状态/日志", command=self.refresh_all).pack(side="left", padx=4)
         ttk.Button(btn_row, text="打开日志文件夹", command=self.open_log_dir).pack(side="left", padx=4)
 
         status_box = ttk.LabelFrame(root, text="运行状态")
@@ -526,6 +561,47 @@ class ProxyApp(tk.Tk):
         self.rules_table.delete(*self.rules_table.get_children())
         for rule in rules:
             self.rules_table.insert("", "end", values=(rule.source_model, rule.target_model))
+
+    def load_log_history(self, max_lines: int = 300) -> None:
+        event_lines: list[str] = []
+        request_lines: list[str] = []
+
+        if EVENT_LOG_PATH.exists():
+            raw_lines = EVENT_LOG_PATH.read_text(encoding="utf-8", errors="replace").splitlines()
+            for row in raw_lines[-max_lines:]:
+                row = row.strip()
+                if not row:
+                    continue
+                try:
+                    event_lines.append(self.format_event_line(json.loads(row)))
+                except Exception:
+                    event_lines.append(row)
+
+        if REQUEST_LOG_PATH.exists():
+            raw_lines = REQUEST_LOG_PATH.read_text(encoding="utf-8", errors="replace").splitlines()
+            for row in raw_lines[-max_lines:]:
+                row = row.strip()
+                if not row:
+                    continue
+                try:
+                    request_lines.append(self.format_request_line(json.loads(row)))
+                except Exception:
+                    request_lines.append(row)
+
+        self._replace_text_lines(self.event_text, event_lines)
+        self._replace_text_lines(self.request_text, request_lines)
+
+    def refresh_all(self) -> None:
+        self.refresh_status()
+        self.load_log_history()
+
+    def _replace_text_lines(self, widget: tk.Text, lines: list[str]) -> None:
+        widget.configure(state="normal")
+        widget.delete("1.0", "end")
+        if lines:
+            widget.insert("end", "\n".join(lines) + "\n")
+            widget.see("end")
+        widget.configure(state="disabled")
 
     def _collect_rules_from_table(self) -> list[ModelRule]:
         rules: list[ModelRule] = []
@@ -733,9 +809,11 @@ class ProxyApp(tk.Tk):
 
         last_request = snap.get("last_request")
         if last_request:
+            original_model = last_request.get("original_model") or "未解析"
+            final_model = last_request.get("final_model") or original_model
             self.last_var.set(
                 "最近请求："
-                f"{last_request.get('original_model')} -> {last_request.get('final_model')} "
+                f"{original_model} -> {final_model} "
                 f"(已重写={last_request.get('rewritten')}, 状态={last_request.get('status')})"
             )
         else:
@@ -794,12 +872,18 @@ class ProxyApp(tk.Tk):
         return f"[{ts}] {json.dumps(event, ensure_ascii=False)}"
 
     def format_request_line(self, req: dict[str, Any]) -> str:
+        original_model = req.get("original_model") or "未解析"
+        final_model = req.get("final_model") or original_model
+        matched_source = req.get("matched_source_model") or "未命中"
+        matched_target = req.get("matched_target_model") or "未命中"
+        parse_error = req.get("parse_error")
+        parse_error_text = f" 解析错误={parse_error}" if parse_error else ""
         return (
             f"[{req.get('ts')}] 状态={req.get('status')} 方法={req.get('method')} "
-            f"模型={req.get('original_model')} -> {req.get('final_model')} "
+            f"模型={original_model} -> {final_model} "
             f"已重写={req.get('rewritten')} "
-            f"命中={req.get('matched_source_model')}->{req.get('matched_target_model')} "
-            f"ID={req.get('request_id')}"
+            f"命中={matched_source}->{matched_target} "
+            f"ID={req.get('request_id')}{parse_error_text}"
         )
 
     def append_event_line(self, line: str) -> None:
